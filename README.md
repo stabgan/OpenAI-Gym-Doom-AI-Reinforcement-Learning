@@ -1,68 +1,119 @@
-# OpenAI Gym Doom AI Built with pyTorch
-I implemented the agent which learns to play the classic Doom , using OpenAi Gym's Environment .
+# 🎮 Doom AI — Deep Reinforcement Learning Agent
 
+A deep reinforcement learning agent that learns to play the classic **Doom** using a Convolutional Neural Network (CNN) and Deep Q-Learning with experience replay and eligibility traces.
 
-Using OpenAI Gym :
+---
 
-Getting Setup:
-Follow the instruction on https://gym.openai.com/docs
+## 📐 Architecture
 
 ```
-git clone https://github.com/openai/gym
-cd gym
-pip install -e . # minimal install
+┌──────────────────────────────────────────────────────┐
+│                   Doom Environment                   │
+│              (Gymnasium + VizDoom)                    │
+└──────────────┬───────────────────────┬───────────────┘
+               │  raw frames          │  actions
+               ▼                      │
+┌──────────────────────────┐          │
+│   Image Preprocessing    │          │
+│  (resize → grayscale →   │          │
+│   normalize to [0,1])    │          │
+└──────────────┬───────────┘          │
+               │  80×80 grayscale     │
+               ▼                      │
+┌──────────────────────────┐          │
+│     CNN Brain            │          │
+│  Conv2d(1→32, k=5)      │          │
+│  Conv2d(32→32, k=3)     │          │
+│  Conv2d(32→64, k=2)     │          │
+│  FC(neurons→40)          │          │
+│  FC(40→n_actions)        │          │
+└──────────────┬───────────┘          │
+               │  Q-values            │
+               ▼                      │
+┌──────────────────────────┐          │
+│   Softmax Body           │──────────┘
+│  (temperature-scaled     │
+│   action selection)      │
+└──────────────────────────┘
+
+┌──────────────────────────┐
+│   Experience Replay      │
+│  N-step returns +        │
+│  eligibility traces      │
+│  (capacity: 10,000)      │
+└──────────────────────────┘
 ```
 
-Basic Example using CartPole-v0:
+## 🛠️ Tech Stack
 
-Level 1: Getting environment up and running
-```
-import gym
-env = gym.make('CartPole-v0')
-env.reset()
-for _ in range(1000): # run for 1000 steps
-    env.render()
-    action = env.action_space.sample() # pick a random action
-    env.step(action) # take action
-```
+| Component | Technology |
+|-----------|-----------|
+| 🧠 Deep Learning | PyTorch |
+| 🏋️ RL Environment | Gymnasium (formerly OpenAI Gym) |
+| 👾 Game Engine | VizDoom / ppaquette-gym-doom |
+| 🖼️ Image Processing | Pillow, NumPy |
+| 🐍 Language | Python 3.8+ |
 
-Level 2: Running trials(AKA episodes)
-```
-import gym
-env = gym.make('CartPole-v0')
-for i_episode in range(20):
-    observation = env.reset() # reset for each new trial
-    for t in range(100): # run for 100 timesteps or until done, whichever is first
-        env.render()
-        action = env.action_space.sample() # select a random action (see https://github.com/openai/gym/wiki/CartPole-v0)
-        observation, reward, done, info = env.step(action)
-        if done:
-            print("Episode finished after {} timesteps".format(t+1))
-            break
+---
+
+## 📦 Dependencies
+
+```txt
+torch
+gymnasium
+numpy
+pillow
+vizdoom
+ppaquette-gym-doom
 ```
 
-Level 3: Non-random actions
-```
-import gym
-env = gym.make('CartPole-v0')
-highscore = 0
-for i_episode in range(20): # run 20 episodes
-  observation = env.reset()
-  points = 0 # keep track of the reward each episode
-  while True: # run until episode is done
-    env.render()
-    action = 1 if observation[2] > 0 else 0 # if angle if positive, move right. if angle is negative, move left
-    observation, reward, done, info = env.step(action)
-    points += reward
-    if done:
-      if points > highscore: # record high score
-           highscore = points
-      break
+Install everything:
+
+```bash
+pip install torch gymnasium numpy pillow vizdoom
 ```
 
-(Taken from the openAI gist)
+> **Note:** `ppaquette-gym-doom` requires a working VizDoom installation. See [VizDoom's install guide](https://github.com/Farama-Foundation/ViZDoom) for platform-specific instructions.
 
-We might want to decrease the size of our images because bigger images mean slower training and higher memory consumption. You might want to make the image grayscale because we might not need to know the difference between a green Kappa or a red Kappa. Another ‘pre-process’ we might take advantage of is utilizing a Convolutional Neural Network in order to extract/accentuate features from an image. Strictly speaking, passing your image through a “feed forward covnet” is not necessary, but doing so will improve results by reducing your image size and thus increasing training speed. 
-After step 1 (image pre-processing), the next step involves the creation of our Q-Learning algorithm. Q-Learning algorithms come in all shapes and sizes, yet all variations function (or are based on) a basic principle. 
+---
 
-# The new Keras-Rl is a wonderful library which I will use in future projects 
+## 🚀 How to Run
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/stabgan/OpenAI-Gym-Doom-AI-Reinforcement-Learning.git
+cd OpenAI-Gym-Doom-AI-Reinforcement-Learning/Doom
+
+# 2. Install dependencies
+pip install torch gymnasium numpy pillow vizdoom
+
+# 3. Run the agent
+python ai.py
+```
+
+The agent trains for 100 epochs (or until average reward ≥ 1500). Training videos are saved to the `videos/` directory.
+
+---
+
+## 📁 Project Structure
+
+```
+Doom/
+├── ai.py                  # CNN model, softmax policy, training loop
+├── experience_replay.py   # N-step progress iterator & replay buffer
+└── image_preprocessing.py # Gymnasium ObservationWrapper (resize/grayscale)
+```
+
+---
+
+## ⚠️ Known Issues
+
+- The `ppaquette-gym-doom` wrapper is largely unmaintained. You may need to register the Doom environment manually or switch to the native [ViZDoom Gymnasium integration](https://github.com/Farama-Foundation/ViZDoom).
+- `SkipWrapper` and `ToDiscrete` from the original wrapper package have been removed; frame-skipping and action discretization should be handled via ViZDoom's native config or a custom wrapper.
+- Training is CPU-only by default. To use GPU, move the model and tensors to CUDA manually.
+
+---
+
+## 📜 License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
