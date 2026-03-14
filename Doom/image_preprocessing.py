@@ -23,7 +23,7 @@ class PreprocessImage(gym.ObservationWrapper):
     def observation(self, img):
         img = self.crop(img)
         pil_img = Image.fromarray(img)
-        pil_img = pil_img.resize((self.img_size[1], self.img_size[0]), Image.BILINEAR)
+        pil_img = pil_img.resize((self.img_size[1], self.img_size[0]), Image.Resampling.BILINEAR)
         img = np.array(pil_img)
         if self.grayscale:
             if img.ndim == 3:

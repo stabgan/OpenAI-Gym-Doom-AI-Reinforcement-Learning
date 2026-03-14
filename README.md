@@ -44,6 +44,19 @@ Doom/
 - The `SkipWrapper` and `ToDiscrete` wrappers from the original code have been removed since ViZDoom environments handle frame skipping and discrete action spaces natively.
 - Training hyperparameters (learning rate, epochs, reward threshold) are tuned for the original Doom Corridor environment and may need adjustment.
 
+## 🔄 Modernization Changes
+
+Migrated from the original (now-broken) codebase:
+
+- `import gym` → `import gymnasium as gym` (Farama Foundation fork)
+- `scipy.misc.imresize` → `PIL.Image.resize` with `Image.Resampling.BILINEAR`
+- `from torch.autograd import Variable` / `Variable(x)` → direct tensor usage
+- `loss.data[0]` → `loss.item()`; `.data.max()` / `.data.clone()` → `.detach().max()` / `.detach().clone()`
+- `env.step()` 4-tuple → 5-tuple (`terminated`, `truncated`)
+- `env.reset()` → returns `(obs, info)` tuple
+- `gym.wrappers.Monitor` → `gym.wrappers.RecordVideo`
+- `F.softmax(x)` → `F.softmax(x, dim=-1)`
+
 ## License
 
 MIT

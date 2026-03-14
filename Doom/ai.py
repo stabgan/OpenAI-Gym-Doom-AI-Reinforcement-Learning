@@ -73,7 +73,7 @@ class AI:
         input_tensor = torch.from_numpy(np.array(inputs, dtype=np.float32))
         output = self.brain(input_tensor)
         actions = self.body(output)
-        return actions.data.numpy()
+        return actions.detach().cpu().numpy()
 
 
 # Part 2 — Training the AI with Deep Convolutional Q-Learning
@@ -90,11 +90,11 @@ def eligibility_trace(batch, cnn):
         )
         with torch.no_grad():
             output = cnn(input_tensor)
-        cumul_reward = 0.0 if series[-1].done else output[1].data.max()
+        cumul_reward = 0.0 if series[-1].done else output[1].detach().max()
         for step in reversed(series[:-1]):
             cumul_reward = step.reward + gamma * cumul_reward
         state = series[0].state
-        target = output[0].data.clone()
+        target = output[0].detach().clone()
         target[series[0].action] = cumul_reward
         inputs.append(state)
         targets.append(target)
